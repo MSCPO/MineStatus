@@ -6,6 +6,7 @@ def fetch_server_info(ip):
         server = JavaServer.lookup(ip)  
         status = server.status()  
         return {
+            "online": True,
             "player": {
                 "online": status.players.online,
                 "max": status.players.max
@@ -20,7 +21,7 @@ def fetch_server_info(ip):
             }
         }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": str(e), "online": False}
 
 app = Flask(__name__)
 
@@ -29,7 +30,7 @@ def ReturnData():
     ip = request.args.get('ip') 
     server_status = fetch_server_info(ip)
     if "error" in server_status:
-        return jsonify({"error": server_status["error"]}), 500
+        return jsonify({"error": server_status["error"], "online": False}), 500
     else:
         return jsonify(server_status)
 
