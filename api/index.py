@@ -7,7 +7,7 @@ def fetch_server_info(ip):
         status = server.status()  
         return {
             "online": True,
-            "player": {
+            "players": {
                 "online": status.players.online,
                 "max": status.players.max
             },
