@@ -19,7 +19,8 @@ class MineStatus:
         success_task = await MineStatus.handle_exceptions(done,  pending)
 
         if success_task is None:
-            return {"error": "No tasks were successful. Is server offline?"}
+            # return {"error": "No tasks were successful. Is server offline?"}
+            raise ValueError("No tasks were successful. Is server offline?")
 
         response = success_task.result() 
         return MineStatus.format_response(response) 
@@ -33,7 +34,8 @@ class MineStatus:
             response = await MineStatus.handle_java(host) 
             return MineStatus.format_response(response) 
         except Exception as e:
-            return {"error": f"Failed to get Java status: {e}"}
+            # return {"error": f"Failed to get Java status: {e}"}
+            raise ValueError("No tasks were successful. Is server offline?")
 
     async def bedrock_status(host: str) -> dict:
         """Get status from server, which can be Bedrock.
@@ -44,7 +46,8 @@ class MineStatus:
             response = await MineStatus.handle_bedrock(host) 
             return MineStatus.format_response(response) 
         except Exception as e:
-            return {"error": f"Failed to get Bedrock status: {e}"}
+            # return {"error": f"Failed to get Bedrock status: {e}"}
+            raise ValueError("No tasks were successful. Is server offline?")
 
     async def handle_exceptions(done: set[asyncio.Task], pending: set[asyncio.Task]) -> asyncio.Task | None:
         """Handle exceptions from tasks.
@@ -52,7 +55,8 @@ class MineStatus:
         Also, cancel all pending tasks, if found correct one.
         """
         if len(done) == 0:
-            return {"error": "No tasks were given to `done` set."}
+            # return {"error": "No tasks were given to `done` set."}
+            raise ValueError("No tasks was given to `done` set.")
 
         for task in done:
             if task.exception()  is not None:
@@ -71,7 +75,8 @@ class MineStatus:
             server = await JavaServer.async_lookup(host) 
             return await server.async_status() 
         except Exception as e:
-            return {"error": f"Failed to connect to Java server at {host}: {e}"}
+            # return {"error": f"Failed to connect to Java server at {host}: {e}"}
+            raise ValueError(f"Failed to connect to Java server at {host}: {e}")
 
     async def handle_bedrock(host: str) -> BedrockStatusResponse:
         """A wrapper around mcstatus, to compress it in one function."""
@@ -79,7 +84,8 @@ class MineStatus:
             server = BedrockServer.lookup(host) 
             return await server.async_status() 
         except Exception as e:
-            return {"error": f"Failed to connect to Bedrock server at {host}: {e}"}
+            # return {"error": f"Failed to connect to Bedrock server at {host}: {e}"}
+            raise ValueError(f"Failed to connect to Bedrock server at {host}: {e}")
 
     def format_response(response: JavaStatusResponse | BedrockStatusResponse) -> dict:
         """Format the response into a dictionary with the required structure."""
@@ -116,4 +122,5 @@ class MineStatus:
                 }
             }
         else:
-            return response
+            # return response
+            raise ValueError("Unexpected response type")
