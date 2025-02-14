@@ -3,7 +3,7 @@
       {
         "src": "/(.*)",
         "continue": true,
-        "dest": "/api/index.py",
+        "dest": "/main.py",
         "headers": {
           "Access-Control-Allow-Credentials": "true",
           "Access-Control-Allow-Origin": "*",
