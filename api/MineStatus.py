@@ -4,26 +4,29 @@ from mcstatus.status_response  import BedrockStatusResponse, JavaStatusResponse
 
 class MineStatus:
     async def status(host: str) -> dict:
-        """Get status from server, which can be Java or Bedrock.
+        try:
+            """Get status from server, which can be Java or Bedrock.
 
-        The function will ping server as Java and as Bedrock in one time, and return the first response.
-        """
-        done, pending = await asyncio.wait( 
-            {
-                asyncio.create_task(MineStatus.handle_java(host),  name="Get status as Java"),
-                asyncio.create_task(MineStatus.handle_bedrock(host),  name="Get status as Bedrock"),
-            },
-            return_when=asyncio.FIRST_COMPLETED,
-        )
+            The function will ping server as Java and as Bedrock in one time, and return the first response.
+            """
+            done, pending = await asyncio.wait( 
+                {
+                    asyncio.create_task(MineStatus.handle_java(host),  name="Get status as Java"),
+                    asyncio.create_task(MineStatus.handle_bedrock(host),  name="Get status as Bedrock"),
+                },
+                return_when=asyncio.FIRST_COMPLETED,
+            )
 
-        success_task = await MineStatus.handle_exceptions(done,  pending)
+            success_task = await MineStatus.handle_exceptions(done,  pending)
 
-        if success_task is None:
-            # return {"error": "No tasks were successful. Is server offline?"}
-            raise ValueError("No tasks were successful. Is server offline?")
+            if success_task is None:
+                # return {"error": "No tasks were successful. Is server offline?"}
+                raise ValueError("No tasks were successful. Is server offline?")
 
-        response = success_task.result() 
-        return MineStatus.format_response(response) 
+            response = success_task.result() 
+            return MineStatus.format_response(response)
+        except Exception as e:
+            return {"error": str(e)}
 
     async def java_status(host: str) -> dict:
         """Get status from server, which can be Java.
@@ -34,8 +37,8 @@ class MineStatus:
             response = await MineStatus.handle_java(host) 
             return MineStatus.format_response(response) 
         except Exception as e:
-            # return {"error": f"Failed to get Java status: {e}"}
-            raise ValueError("No tasks were successful. Is server offline?")
+            return {"error": f"Failed to get Java status: {e}"}
+            # raise ValueError("No tasks were successful. Is server offline?")
 
     async def bedrock_status(host: str) -> dict:
         """Get status from server, which can be Bedrock.
@@ -46,8 +49,8 @@ class MineStatus:
             response = await MineStatus.handle_bedrock(host) 
             return MineStatus.format_response(response) 
         except Exception as e:
-            # return {"error": f"Failed to get Bedrock status: {e}"}
-            raise ValueError("No tasks were successful. Is server offline?")
+            return {"error": f"Failed to get Bedrock status: {e}"}
+            # raise ValueError("No tasks were successful. Is server offline?")
 
     async def handle_exceptions(done: set[asyncio.Task], pending: set[asyncio.Task]) -> asyncio.Task | None:
         """Handle exceptions from tasks.
