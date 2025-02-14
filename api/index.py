@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.MineStatus import bedrock_status, java_status, status
+from MineStatus import handle_bedrock, handle_java, status
 
 app = FastAPI()
 
@@ -24,7 +24,7 @@ async def _(request: Request):
 @app.get("/java/")
 async def _(request: Request):
     if host := request.query_params.get("ip"):
-        return await java_status(host)
+        return await handle_java(host)
     else:
         return {"error": "Missing 'ip' parameter"}
 
@@ -32,7 +32,7 @@ async def _(request: Request):
 @app.get("/bedrock/")
 async def _(request: Request):
     if host := request.query_params.get("ip"):
-        return await bedrock_status(host)
+        return await handle_bedrock(host)
     else:
         return {"error": "Missing 'ip' parameter"}
 
