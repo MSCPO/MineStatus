@@ -1,129 +1,146 @@
 import asyncio
+
 from mcstatus import BedrockServer, JavaServer
-from mcstatus.status_response  import BedrockStatusResponse, JavaStatusResponse
+from mcstatus.status_response import BedrockStatusResponse, JavaStatusResponse
 
-class MineStatus:
-    async def status(host: str) -> dict:
-        try:
-            """Get status from server, which can be Java or Bedrock.
 
-            The function will ping server as Java and as Bedrock in one time, and return the first response.
-            """
-            done, pending = await asyncio.wait( 
-                {
-                    asyncio.create_task(MineStatus.handle_java(host),  name="Get status as Java"),
-                    asyncio.create_task(MineStatus.handle_bedrock(host),  name="Get status as Bedrock"),
-                },
-                return_when=asyncio.FIRST_COMPLETED,
-            )
+async def status(host: str) -> dict:
+    """
+    Retrieves the status of a Minecraft server, which can be either Java or Bedrock.
 
-            success_task = await MineStatus.handle_exceptions(done,  pending)
+    Args:
+        host (str): The hostname or IP address of the server to query.
 
-            if success_task is None:
-                # return {"error": "No tasks were successful. Is server offline?"}
-                raise ValueError("No tasks were successful. Is server offline?")
+    Returns:
+        dict: A dictionary containing the server's status. If an error occurs,
+              the dictionary will contain an error message.
+    """
+    try:
+        response = await get_server_status(host)
+        return format_response(response)
+    except Exception as e:
+        return {"error": f"Failed to get server status: {e}"}
 
-            response = success_task.result() 
-            return MineStatus.format_response(response)
-        except Exception as e:
-            return {"error": str(e)}
 
-    async def java_status(host: str) -> dict:
-        """Get status from server, which can be Java.
+async def get_server_status(host: str):
+    """
+    Pings the server for both Java and Bedrock editions, returning the first successful response.
 
-        The function will ping server as Java.
-        """
-        try:
-            response = await MineStatus.handle_java(host) 
-            return MineStatus.format_response(response) 
-        except Exception as e:
-            return {"error": f"Failed to get Java status: {e}"}
-            # raise ValueError("No tasks were successful. Is server offline?")
+    Args:
+        host (str): The hostname or IP address of the server to query.
 
-    async def bedrock_status(host: str) -> dict:
-        """Get status from server, which can be Bedrock.
+    Returns:
+        JavaStatusResponse | BedrockStatusResponse: The first successful server status response
+                                                     from either Java or Bedrock server.
 
-        The function will ping server as Bedrock.
-        """
-        try:
-            response = await MineStatus.handle_bedrock(host) 
-            return MineStatus.format_response(response) 
-        except Exception as e:
-            return {"error": f"Failed to get Bedrock status: {e}"}
-            # raise ValueError("No tasks were successful. Is server offline?")
+    Raises:
+        ValueError: If neither Java nor Bedrock server responses are successful.
+    """
+    tasks = [handle_java(host), handle_bedrock(host)]
 
-    async def handle_exceptions(done: set[asyncio.Task], pending: set[asyncio.Task]) -> asyncio.Task | None:
-        """Handle exceptions from tasks.
+    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
 
-        Also, cancel all pending tasks, if found correct one.
-        """
-        if len(done) == 0:
-            # return {"error": "No tasks were given to `done` set."}
-            raise ValueError("No tasks was given to `done` set.")
+    # If any task completed successfully, we get the first result
+    for task in done:
+        return task.result()
 
-        for task in done:
-            if task.exception()  is not None:
-                if len(pending) > 0:
-                    return await MineStatus.handle_exceptions(*await  asyncio.wait(pending,  return_when=asyncio.FIRST_COMPLETED))
-            else:
-                for pending_task in pending:
-                    pending_task.cancel() 
-                return task
+    # If no tasks were successful
+    raise ValueError("No tasks were successful. Is server offline?")
 
-        return None
 
-    async def handle_java(host: str) -> JavaStatusResponse:
-        """A wrapper around mcstatus, to compress it in one function."""
-        try:
-            server = await JavaServer.async_lookup(host) 
-            return await server.async_status() 
-        except Exception as e:
-            # return {"error": f"Failed to connect to Java server at {host}: {e}"}
-            raise ValueError(f"Failed to connect to Java server at {host}: {e}")
+async def handle_java(host: str) -> JavaStatusResponse:
+    """
+    Pings a Java Minecraft server and returns its status.
 
-    async def handle_bedrock(host: str) -> BedrockStatusResponse:
-        """A wrapper around mcstatus, to compress it in one function."""
-        try:
-            server = BedrockServer.lookup(host) 
-            return await server.async_status() 
-        except Exception as e:
-            # return {"error": f"Failed to connect to Bedrock server at {host}: {e}"}
-            raise ValueError(f"Failed to connect to Bedrock server at {host}: {e}")
+    Args:
+        host (str): The hostname or IP address of the Java server to query.
 
-    def format_response(response: JavaStatusResponse | BedrockStatusResponse) -> dict:
-        """Format the response into a dictionary with the required structure."""
-        if isinstance(response, JavaStatusResponse):
-            return {
-                "online": True,
-                "players": {
-                    "online": response.players.online, 
-                    "max": response.players.max, 
-                },
-                "delay": response.latency, 
-                "version": response.version.name, 
-                "motd": {
-                    "plain": response.motd.to_plain(), 
-                    "html": response.motd.to_html(), 
-                    "minecraft": response.motd.to_minecraft(), 
-                    "ansi": response.motd.to_ansi() 
-                }
-            }
-        elif isinstance(response, BedrockStatusResponse):
-            return {
-                "online": True,
-                "players": {
-                    "online": response.players_online, 
-                    "max": response.players_max, 
-                },
-                "delay": response.latency, 
-                "version": response.version.version, 
-                "motd": {
-                    "plain": response.motd.to_plain(), 
-                    "html": response.motd.to_html(), 
-                    "minecraft": response.motd.to_minecraft(), 
-                    "ansi": response.motd.to_ansi() 
-                }
-            }
-        else:
-            # return response
-            raise ValueError("Unexpected response type")
+    Returns:
+        JavaStatusResponse: The status of the Java Minecraft server.
+
+    Raises:
+        ValueError: If the connection to the Java server fails.
+    """
+    try:
+        server = await JavaServer.async_lookup(host)
+        return await server.async_status()
+    except Exception as e:
+        raise ValueError(f"Failed to connect to Java server at {host}: {e}") from e
+
+
+async def handle_bedrock(host: str) -> BedrockStatusResponse:
+    """
+    Pings a Bedrock Minecraft server and returns its status.
+
+    Args:
+        host (str): The hostname or IP address of the Bedrock server to query.
+
+    Returns:
+        BedrockStatusResponse: The status of the Bedrock Minecraft server.
+
+    Raises:
+        ValueError: If the connection to the Bedrock server fails.
+    """
+    try:
+        server = BedrockServer.lookup(host)
+        return await server.async_status()
+    except Exception as e:
+        raise ValueError(f"Failed to connect to Bedrock server at {host}: {e}") from e
+
+
+def format_response(response: JavaStatusResponse | BedrockStatusResponse) -> dict:
+    """
+    Formats the server status response into a dictionary with the required structure.
+
+    Args:
+        response (JavaStatusResponse | BedrockStatusResponse): The server status response
+                                                               from either Java or Bedrock server.
+
+    Returns:
+        dict: A dictionary containing the formatted server status information.
+
+    Raises:
+        ValueError: If the response type is not JavaStatusResponse or BedrockStatusResponse.
+    """
+    if isinstance(response, JavaStatusResponse):
+        return {
+            "online": True,
+            "players": {
+                "online": response.players.online,
+                "max": response.players.max,
+            },
+            "delay": response.latency,
+            "version": response.version.name,
+            "motd": format_motd(response.motd),
+        }
+    elif isinstance(response, BedrockStatusResponse):
+        return {
+            "online": True,
+            "players": {
+                "online": response.players_online,
+                "max": response.players_max,
+            },
+            "delay": response.latency,
+            "version": response.version.version,
+            "motd": format_motd(response.motd),
+        }
+    else:
+        raise ValueError("Unexpected response type")
+
+
+def format_motd(motd):
+    """
+    Helper function to format the Message of the Day (MOTD) into various formats.
+
+    Args:
+        motd: The MOTD object that contains the server's message.
+
+    Returns:
+        dict: A dictionary with the MOTD in different formats such as plain, HTML, Minecraft, and ANSI.
+    """
+    return {
+        "plain": motd.to_plain(),
+        "html": motd.to_html(),
+        "minecraft": motd.to_minecraft(),
+        "ansi": motd.to_ansi(),
+    }
