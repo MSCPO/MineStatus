@@ -36,7 +36,10 @@ async def get_server_status(host: str):
     Raises:
         ValueError: If neither Java nor Bedrock server responses are successful.
     """
-    tasks = [handle_java(host), handle_bedrock(host)]
+    tasks = [
+        asyncio.create_task(handle_java(host)),
+        asyncio.create_task(handle_bedrock(host)),
+    ]
 
     done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
 
