@@ -1,4 +1,4 @@
-from MineStatus import MineStatus
+from api.MineStatus import MineStatus
 from fastapi import FastAPI, Request 
 from fastapi.responses  import JSONResponse
 import uvicorn
