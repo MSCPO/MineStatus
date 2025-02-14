@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from MineStatus import handle_bedrock, handle_java, status
+from api.MineStatus import handle_bedrock, handle_java, status
 
 app = FastAPI()
 
