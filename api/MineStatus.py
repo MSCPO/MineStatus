@@ -126,6 +126,7 @@ def format_response(response: JavaStatusResponse | BedrockStatusResponse) -> dic
             "delay": response.latency,
             "version": response.version.name,
             "motd": format_motd(response.motd),
+            "icon": response.icon
         }
     else:
         raise ValueError("Unexpected response type")
