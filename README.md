@@ -8,6 +8,8 @@
   </a>
 </p>
 
+[简体中文](README_CN.md)
+
 ## Introduction
 
 This is just a lightweight and simple Minecraft server query API.
