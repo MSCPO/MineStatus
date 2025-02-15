@@ -8,23 +8,23 @@
   </a>
 </p>
 
-## Introduction
+## 简介
 
-This is just a lightweight and simple Minecraft server query API.
+只是一款轻量简单的 Minecraft 服务器查询 API。
 
-## Features
+## 特性
 
-- Lightweight and easy to use
-- Free to deploy
-- Fast
+- 轻量易用
+- 免费部署
+- 快速
 
-## Contributors
+## 贡献者
 
 <a href="https://github.com/MSCPO/ServerDocumentation/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=MSCPO/MineStatus" alt="Contributors"/>
 </a>
 
-## Acknowledgements
+## 鸣谢
 
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [MCStatus](https://github.com/py-mine/mcstatus)

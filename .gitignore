@@ -170,3 +170,5 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 .vercel
+# Local Netlify folder
+.netlify
