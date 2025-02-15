@@ -22,7 +22,7 @@
 
 ## 贡献者
 
-<a href="https://github.com/MSCPO/ServerDocumentation/graphs/contributors">
+<a href="https://github.com/MSCPO/MineStatus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=MSCPO/MineStatus" alt="Contributors"/>
 </a>
 
