@@ -8,6 +8,8 @@
   </a>
 </p>
 
+[English](README.md)
+
 ## 简介
 
 只是一款轻量简单的 Minecraft 服务器查询 API。

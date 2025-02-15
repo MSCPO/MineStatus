@@ -1,7 +1,9 @@
 import asyncio
 from mcstatus import BedrockServer, JavaServer
 from mcstatus.status_response import BedrockStatusResponse, JavaStatusResponse
+from mcstatus.motd import Motd
 from .ServerCache import ServerCache
+
 
 server_cache = ServerCache(ttl=600)  # 10 minutes
 
@@ -129,7 +131,7 @@ def format_response(response: JavaStatusResponse | BedrockStatusResponse) -> dic
         raise ValueError("Unexpected response type")
 
 
-def format_motd(motd) -> dict:
+def format_motd(motd: Motd) -> dict:
     """
     Helper function to format the Message of the Day (MOTD) into various formats.
 
