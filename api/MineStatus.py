@@ -1,7 +1,9 @@
 import asyncio
 from mcstatus import BedrockServer, JavaServer
 from mcstatus.status_response import BedrockStatusResponse, JavaStatusResponse
+from .ServerCache import ServerCache
 
+server_cache = ServerCache(ttl=600)  # 10 minutes
 
 async def get_server_stats(host: str, server_type: str):
     """
@@ -15,6 +17,11 @@ async def get_server_stats(host: str, server_type: str):
         dict: A dictionary containing the server's status or an error message.
     """
     try:
+        cache_key = f"{host}_{server_type}"  # 用host和server_type作为缓存的键
+        cached_result = await server_cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         if server_type == "java":
             response = await handle_java_stats(host)
         elif server_type == "bedrock":
@@ -22,7 +29,9 @@ async def get_server_stats(host: str, server_type: str):
         else:
             raise ValueError("Unsupported server type")
 
-        return format_response(response)
+        result = format_response(response)
+        await server_cache.set(cache_key, result)
+        return result
 
     except Exception as e:
         return {"error": str(e)}
@@ -45,7 +54,7 @@ async def handle_java_stats(host: str) -> JavaStatusResponse:
         server = await JavaServer.async_lookup(host)
         return await server.async_status()
     except Exception as e:
-        raise ValueError(f"Failed to connect to Java server at {host}: {e}")
+        raise ValueError(f"Failed to connect to Java server at {host}: {e}") from e
 
 
 async def handle_bedrock_stats(host: str) -> BedrockStatusResponse:
@@ -65,7 +74,7 @@ async def handle_bedrock_stats(host: str) -> BedrockStatusResponse:
         server = BedrockServer.lookup(host)
         return await server.async_status()
     except Exception as e:
-        raise ValueError(f"Failed to connect to Bedrock server at {host}: {e}")
+        raise ValueError(f"Failed to connect to Bedrock server at {host}: {e}") from e
 
 
 async def unclassified(host: str):
