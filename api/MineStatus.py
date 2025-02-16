@@ -1,11 +1,13 @@
 import asyncio
+
 from mcstatus import BedrockServer, JavaServer
-from mcstatus.status_response import BedrockStatusResponse, JavaStatusResponse
 from mcstatus.motd import Motd
+from mcstatus.status_response import BedrockStatusResponse, JavaStatusResponse
+
 from .ServerCache import ServerCache
 
-
 server_cache = ServerCache(ttl=600)  # 10 minutes
+
 
 async def get_server_stats(host: str, server_type: str):
     """
@@ -116,7 +118,7 @@ def format_response(response: JavaStatusResponse | BedrockStatusResponse) -> dic
     Returns:
         dict: A dictionary containing the formatted server status information.
     """
-    if isinstance(response, (JavaStatusResponse, BedrockStatusResponse)):
+    if isinstance(response, JavaStatusResponse):
         return {
             "online": True,
             "players": {
@@ -126,7 +128,19 @@ def format_response(response: JavaStatusResponse | BedrockStatusResponse) -> dic
             "delay": response.latency,
             "version": response.version.name,
             "motd": format_motd(response.motd),
-            "icon": response.icon
+            "icon": response.icon,
+        }
+    elif isinstance(response, BedrockStatusResponse):
+        return {
+            "online": True,
+            "players": {
+                "online": response.players.online,
+                "max": response.players.max,
+            },
+            "delay": response.latency,
+            "version": response.version.name,
+            "motd": format_motd(response.motd),
+            "icon": None,
         }
     else:
         raise ValueError("Unexpected response type")
