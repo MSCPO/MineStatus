@@ -26,8 +26,7 @@ async def _(request: Request):
 @app.get("/java/")
 async def _(request: Request):
     if host := request.query_params.get("ip"):
-        response = await MineStatus.handle_java_stats(host)
-        return MineStatus.format_response(response)
+        return await MineStatus.get_server_stats(host, "java")
     else:
         return {"error": "Missing 'ip' parameter"}
 
@@ -35,8 +34,7 @@ async def _(request: Request):
 @app.get("/bedrock/")
 async def _(request: Request):
     if host := request.query_params.get("ip"):
-        response = await MineStatus.handle_bedrock_stats(host)
-        return MineStatus.format_response(response)
+        return await MineStatus.get_server_stats(host, "bedrock")
     else:
         return {"error": "Missing 'ip' parameter"}
 

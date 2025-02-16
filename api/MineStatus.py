@@ -27,9 +27,9 @@ async def get_server_stats(host: str, server_type: str):
             return cached_result
 
         if server_type == "java":
-            response = await handle_java_stats(host)
+            response: JavaServer = await handle_java_stats(host)
         elif server_type == "bedrock":
-            response = await handle_bedrock_stats(host)
+            response: BedrockStatusResponse = await handle_bedrock_stats(host)
         else:
             raise ValueError("Unsupported server type")
 
