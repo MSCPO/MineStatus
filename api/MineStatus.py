@@ -25,11 +25,11 @@ async def get_server_stats(host: str, server_type: str):
         cached_result = await server_cache.get(cache_key)
         if cached_result:
             return cached_result
-
+        response: JavaStatusResponse | BedrockStatusResponse | None = None
         if server_type == "java":
-            response: JavaServer = await handle_java_stats(host)
+            response = await handle_java_stats(host)
         elif server_type == "bedrock":
-            response: BedrockStatusResponse = await handle_bedrock_stats(host)
+            response = await handle_bedrock_stats(host)
         else:
             raise ValueError("Unsupported server type")
 
@@ -55,7 +55,7 @@ async def handle_java_stats(host: str) -> JavaStatusResponse:
         ValueError: If the connection to the Java server fails.
     """
     try:
-        server = await JavaServer.async_lookup(host)
+        server = await JavaServer.async_lookup(host, timeout=3)
         return await server.async_status()
     except Exception as e:
         raise ValueError(f"Failed to connect to Java server at {host}: {e}") from e
@@ -75,7 +75,7 @@ async def handle_bedrock_stats(host: str) -> BedrockStatusResponse:
         ValueError: If the connection to the Bedrock server fails.
     """
     try:
-        server = BedrockServer.lookup(host)
+        server = BedrockServer.lookup(host, timeout=3)
         return await server.async_status()
     except Exception as e:
         raise ValueError(f"Failed to connect to Bedrock server at {host}: {e}") from e
