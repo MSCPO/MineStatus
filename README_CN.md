@@ -20,6 +20,10 @@
 - 免费部署
 - 快速
 
+## ApiDoc/Wiki
+
+[[MSCPO/MineStatus/wiki]](https://github.com/MSCPO/MineStatus/wiki)
+
 ## 贡献者
 
 <a href="https://github.com/MSCPO/MineStatus/graphs/contributors">

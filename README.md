@@ -20,6 +20,10 @@ This is just a lightweight and simple Minecraft server query API.
 - Free to deploy
 - Fast
 
+## ApiDoc/Wiki
+
+[[MSCPO/MineStatus/wiki]](https://github.com/MSCPO/MineStatus/wiki)
+
 ## Contributors
 
 <a href="https://github.com/MSCPO/MineStatus/graphs/contributors">
