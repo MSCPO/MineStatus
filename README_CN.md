@@ -14,6 +14,11 @@
 
 只是一款轻量简单的 Minecraft 服务器查询 API。
 
+## 部署
+
+- **Vercel**：点击上方按钮一键部署（配置见 `vercel.json`）。
+- **本地**：`pip install -r requirements.txt` 后执行 `python main.py`（监听 3000 端口）。
+
 ## 特性
 
 - 轻量易用

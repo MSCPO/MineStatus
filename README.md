@@ -14,6 +14,11 @@
 
 This is just a lightweight and simple Minecraft server query API.
 
+## Deployment
+
+- **Vercel**: one-click deploy with the button above (`vercel.json`).
+- **Locally**: `pip install -r requirements.txt` then `python main.py` (served on port 3000).
+
 ## Features
 
 - Lightweight and easy to use

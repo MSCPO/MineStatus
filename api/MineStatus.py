@@ -2,29 +2,31 @@ import asyncio
 
 from mcstatus import BedrockServer, JavaServer
 from mcstatus.motd import Motd
-from mcstatus.status_response import BedrockStatusResponse, JavaStatusResponse
+from mcstatus.responses import BedrockStatusResponse, JavaStatusResponse
 
 from .ServerCache import ServerCache
 
 server_cache = ServerCache(ttl=600)  # 10 minutes
 
 
-async def get_server_stats(host: str, server_type: str):
+async def get_server_stats(host: str, server_type: str, use_cache: bool = True):
     """
     Retrieves the status of a Minecraft server (either Java or Bedrock).
 
     Args:
         host (str): The hostname or IP address of the server to query.
         server_type (str): The type of the server, either 'java' or 'bedrock'.
+        use_cache (bool): Whether to read/write the cache. Defaults to True.
 
     Returns:
         dict: A dictionary containing the server's status or an error message.
     """
     try:
         cache_key = f"{host}_{server_type}"  # 用host和server_type作为缓存的键
-        cached_result = await server_cache.get(cache_key)
-        if cached_result:
-            return cached_result
+        if use_cache:
+            cached_result = await server_cache.get(cache_key)
+            if cached_result:
+                return cached_result
         response: JavaStatusResponse | BedrockStatusResponse | None = None
         if server_type == "java":
             response = await handle_java_stats(host)
@@ -34,7 +36,8 @@ async def get_server_stats(host: str, server_type: str):
             raise ValueError("Unsupported server type")
 
         result = format_response(response)
-        await server_cache.set(cache_key, result)
+        if use_cache:
+            await server_cache.set(cache_key, result)
         return result
 
     except Exception as e:
@@ -81,19 +84,20 @@ async def handle_bedrock_stats(host: str) -> BedrockStatusResponse:
         raise ValueError(f"Failed to connect to Bedrock server at {host}: {e}") from e
 
 
-async def unclassified(host: str):
+async def unclassified(host: str, use_cache: bool = True):
     """
     Retrieves the status of a Minecraft server, which can be either Java or Bedrock.
 
     Args:
         host (str): The hostname or IP address of the server to query.
+        use_cache (bool): Whether to read/write the cache. Defaults to True.
 
     Returns:
         dict: A dictionary containing the server's status or an error message.
     """
     server_types = ["java", "bedrock"]
     tasks = [
-        asyncio.create_task(get_server_stats(host, server_type))
+        asyncio.create_task(get_server_stats(host, server_type, use_cache))
         for server_type in server_types
     ]
 
