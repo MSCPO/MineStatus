@@ -18,6 +18,7 @@
 
 - **Vercel**：点击上方按钮一键部署（配置见 `vercel.json`）。
 - **本地**：`pip install -r requirements.txt` 后执行 `python main.py`（监听 3000 端口）。
+- **uv**：`uv sync` 后执行 `uv run main.py`（依赖锁定在 `uv.lock`）。
 
 ## 特性
 

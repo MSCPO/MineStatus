@@ -8,3 +8,8 @@ dependencies = [
     "uvicorn (>=0.52.0,<0.53.0)",
     "mcstatus (>=14.1.0,<15.0.0)",
 ]
+
+# Application project: uv sync installs dependencies only,
+# no root package build (keeps uv independent of poetry).
+[tool.uv]
+package = false
