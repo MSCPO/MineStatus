@@ -16,9 +16,9 @@ This is just a lightweight and simple Minecraft server query API.
 
 ## Deployment
 
+- **uv (recommended)**: `uv sync` then `uv run main.py` (dependencies locked in `uv.lock`).
 - **Vercel**: one-click deploy with the button above (`vercel.json`).
-- **Locally**: `pip install -r requirements.txt` then `python main.py` (served on port 3000).
-- **uv**: `uv sync` then `uv run main.py` (dependencies locked in `uv.lock`).
+- **pip**: `pip install -r requirements.txt` then `python main.py` (served on port 3000).
 
 ## Features
 
