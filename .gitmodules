@@ -1,3 +1,3 @@
 [submodule "wiki"]
 	path = wiki
-	url = https://github.com/MSCPO/MineStatus.wiki.git
+	url = git@github.com:MSCPO/MineStatus.wiki.git
