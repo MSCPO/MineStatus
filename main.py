@@ -1,9 +1,10 @@
 """MineStatus - a lightweight Minecraft server status query API."""
 
+import base64
 import uvicorn
 from typing import Annotated, Optional, Union
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -109,18 +110,55 @@ async def status_unclassified(ip: IpParam, cache: CacheParam = True):
     return await MineStatus.unclassified(ip, cache)
 
 
+_JAVA_ICON_SUFFIX = "/icon"
+
+
+async def get_java_icon(host: str, use_cache: bool = True) -> Response:
+    """Query the Java server and return its icon as a PNG image.
+
+    Raises HTTPException(404) when the server is unreachable or has no icon.
+    """
+    result = await MineStatus.get_server_stats(host, "java", use_cache)
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    icon = result.get("icon") or ""
+    if not icon.startswith("data:image/") or "," not in icon:
+        raise HTTPException(status_code=404, detail="Server has no icon")
+    try:
+        data = base64.b64decode(icon.split(",", 1)[1])
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail="Invalid icon data") from exc
+    return Response(content=data, media_type="image/png")
+
+
 @app.get(
     "/java/",
     response_model=ApiResponse,
     summary="Query Java Edition server status",
     description=(
         "Queries a Java server over the Java status protocol and returns "
-        "player counts, version, MOTD and the server icon."
+        "player counts, version, MOTD and the server icon.\n\n"
+        f"Append `{_JAVA_ICON_SUFFIX}` to the `ip` value to get the server "
+        "icon as a PNG image instead of JSON, e.g. "
+        f"`/java/?ip=example.com{_JAVA_ICON_SUFFIX}` "
+        "(404 if the server is unreachable or has no icon)."
     ),
     tags=[TAG],
+    responses={
+        200: {
+            "content": {"application/json": {}, "image/png": {}},
+            "description": "Server status JSON, or the icon PNG when ip ends with /icon",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Server unreachable or no icon available",
+        },
+    },
 )
 async def status_java(ip: IpParam, cache: CacheParam = True):
-    """Query a Java Edition server status."""
+    """Query a Java Edition server status (append /icon to ip for the icon PNG)."""
+    if ip.endswith(_JAVA_ICON_SUFFIX):
+        return await get_java_icon(ip[: -len(_JAVA_ICON_SUFFIX)], cache)
     return await MineStatus.get_server_stats(ip, "java", cache)
 
 
