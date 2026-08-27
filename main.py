@@ -1,9 +1,9 @@
 """MineStatus - a lightweight Minecraft server status query API."""
 
 import base64
-import uvicorn
-from typing import Annotated, Optional, Union
+from typing import Annotated
 
+import uvicorn
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -58,7 +58,7 @@ class StatusResponse(BaseModel):
     delay: float
     version: str
     motd: MotdInfo
-    icon: Optional[str] = None
+    icon: str | None = None
 
 
 class ErrorResponse(BaseModel):
@@ -67,7 +67,7 @@ class ErrorResponse(BaseModel):
     error: str
 
 
-ApiResponse = Union[StatusResponse, ErrorResponse]
+ApiResponse = StatusResponse | ErrorResponse
 
 # ---------------------------------------------------------------------------
 # Shared parameters
@@ -121,7 +121,7 @@ async def get_java_icon(host: str, use_cache: bool = True) -> Response:
     result = await MineStatus.get_server_stats(host, "java", use_cache)
     if "error" in result:
         raise HTTPException(status_code=404, detail=result["error"])
-    icon = result.get("icon") or ""
+    icon: str = result.get("icon") or ""
     if not icon.startswith("data:image/") or "," not in icon:
         raise HTTPException(status_code=404, detail="Server has no icon")
     try:

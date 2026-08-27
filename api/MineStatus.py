@@ -1,4 +1,6 @@
 import asyncio
+import logging
+from typing import TypedDict, cast
 
 from mcstatus import BedrockServer, JavaServer
 from mcstatus.motd import Motd
@@ -8,8 +10,52 @@ from .ServerCache import ServerCache
 
 server_cache = ServerCache(ttl=600)  # 10 minutes
 
+# DNS + connection budget per status query (seconds). Keep this generous:
+# some resolvers need more than 3s for DNS alone.
+TIMEOUT = 8
 
-async def get_server_stats(host: str, server_type: str, use_cache: bool = True):
+logger = logging.getLogger(__name__)
+
+
+class MotdDict(TypedDict):
+    """MOTD in multiple encodings."""
+
+    plain: str
+    html: str
+    minecraft: str
+    ansi: str
+
+
+class PlayersDict(TypedDict):
+    """Player counts."""
+
+    online: int
+    max: int
+
+
+class StatusDict(TypedDict):
+    """Status result of an online server."""
+
+    online: bool
+    players: PlayersDict
+    delay: float
+    version: str
+    motd: MotdDict
+    icon: str | None
+
+
+class ErrorDict(TypedDict):
+    """Error result."""
+
+    error: str
+
+
+QueryResult = StatusDict | ErrorDict
+
+
+async def get_server_stats(
+    host: str, server_type: str, use_cache: bool = True
+) -> QueryResult:
     """
     Retrieves the status of a Minecraft server (either Java or Bedrock).
 
@@ -19,12 +65,14 @@ async def get_server_stats(host: str, server_type: str, use_cache: bool = True):
         use_cache (bool): Whether to read/write the cache. Defaults to True.
 
     Returns:
-        dict: A dictionary containing the server's status or an error message.
+        QueryResult: The server's status or an error message.
     """
     try:
         cache_key = f"{host}_{server_type}"  # 用host和server_type作为缓存的键
         if use_cache:
-            cached_result = await server_cache.get(cache_key)
+            cached_result = cast(
+                QueryResult | None, await server_cache.get(cache_key)
+            )
             if cached_result:
                 return cached_result
         response: JavaStatusResponse | BedrockStatusResponse | None = None
@@ -40,7 +88,7 @@ async def get_server_stats(host: str, server_type: str, use_cache: bool = True):
             await server_cache.set(cache_key, result)
         return result
 
-    except Exception as e:
+    except (ValueError, OSError) as e:
         return {"error": str(e)}
 
 
@@ -58,7 +106,7 @@ async def handle_java_stats(host: str) -> JavaStatusResponse:
         ValueError: If the connection to the Java server fails.
     """
     try:
-        server = await JavaServer.async_lookup(host, timeout=3)
+        server = await JavaServer.async_lookup(host, timeout=TIMEOUT)
         return await server.async_status()
     except Exception as e:
         raise ValueError(f"Failed to connect to Java server at {host}: {e}") from e
@@ -78,13 +126,13 @@ async def handle_bedrock_stats(host: str) -> BedrockStatusResponse:
         ValueError: If the connection to the Bedrock server fails.
     """
     try:
-        server = BedrockServer.lookup(host, timeout=3)
+        server = BedrockServer.lookup(host, timeout=TIMEOUT)
         return await server.async_status()
     except Exception as e:
         raise ValueError(f"Failed to connect to Bedrock server at {host}: {e}") from e
 
 
-async def unclassified(host: str, use_cache: bool = True):
+async def unclassified(host: str, use_cache: bool = True) -> QueryResult:
     """
     Retrieves the status of a Minecraft server, which can be either Java or Bedrock.
 
@@ -93,7 +141,7 @@ async def unclassified(host: str, use_cache: bool = True):
         use_cache (bool): Whether to read/write the cache. Defaults to True.
 
     Returns:
-        dict: A dictionary containing the server's status or an error message.
+        QueryResult: The server's status or an error message.
     """
     server_types = ["java", "bedrock"]
     tasks = [
@@ -106,13 +154,16 @@ async def unclassified(host: str, use_cache: bool = True):
             result = await task
             if "error" not in result:
                 return result
-        except Exception:
+        except (ValueError, OSError) as exc:
+            logger.warning("Status query failed for %s: %s", host, exc)
             continue
 
     return {"error": "No server status detected, Is server offline?"}
 
 
-def format_response(response: JavaStatusResponse | BedrockStatusResponse) -> dict:
+def format_response(
+    response: JavaStatusResponse | BedrockStatusResponse,
+) -> StatusDict:
     """
     Formats the server status response into a dictionary with the required structure.
 
@@ -120,7 +171,7 @@ def format_response(response: JavaStatusResponse | BedrockStatusResponse) -> dic
         response (JavaStatusResponse | BedrockStatusResponse): The server status response.
 
     Returns:
-        dict: A dictionary containing the formatted server status information.
+        StatusDict: A dictionary containing the formatted server status information.
     """
     if isinstance(response, JavaStatusResponse):
         return {
@@ -134,23 +185,20 @@ def format_response(response: JavaStatusResponse | BedrockStatusResponse) -> dic
             "motd": format_motd(response.motd),
             "icon": response.icon,
         }
-    elif isinstance(response, BedrockStatusResponse):
-        return {
-            "online": True,
-            "players": {
-                "online": response.players.online,
-                "max": response.players.max,
-            },
-            "delay": response.latency,
-            "version": response.version.name,
-            "motd": format_motd(response.motd),
-            "icon": None,
-        }
-    else:
-        raise ValueError("Unexpected response type")
+    return {
+        "online": True,
+        "players": {
+            "online": response.players.online,
+            "max": response.players.max,
+        },
+        "delay": response.latency,
+        "version": response.version.name,
+        "motd": format_motd(response.motd),
+        "icon": None,
+    }
 
 
-def format_motd(motd: Motd) -> dict:
+def format_motd(motd: Motd) -> MotdDict:
     """
     Helper function to format the Message of the Day (MOTD) into various formats.
 

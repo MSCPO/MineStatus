@@ -11,12 +11,12 @@ class ServerCache:
         :param ttl: The time-to-live for the cache, default is 300 seconds (5 minutes).
         :param max_cache_size: The maximum number of items in the cache.
         """
-        self.ttl = ttl
-        self.max_cache_size = max_cache_size
-        self.cache = OrderedDict()
-        self.lock = asyncio.Lock()
+        self.ttl: int = ttl
+        self.max_cache_size: int = max_cache_size
+        self.cache: OrderedDict[str, tuple[float, object]] = OrderedDict()
+        self.lock: asyncio.Lock = asyncio.Lock()
 
-    async def get(self, key: str):
+    async def get(self, key: str) -> object | None:
         """
         Retrieves the cached value. Returns the cached value if it hasn't expired, otherwise returns None.
 
@@ -34,7 +34,7 @@ class ServerCache:
                     del self.cache[key]
             return None
 
-    async def set(self, key: str, result):
+    async def set(self, key: str, result: object) -> None:
         """
         Sets a cache item and evicts the least recently used item if the cache exceeds the maximum size.
 
@@ -46,4 +46,4 @@ class ServerCache:
             self.cache[key] = (expiry_time, result)
 
             if len(self.cache) > self.max_cache_size:
-                self.cache.popitem(last=False)  # Pop the least
+                _ = self.cache.popitem(last=False)  # Pop the least
