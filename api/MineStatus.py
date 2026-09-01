@@ -148,14 +148,27 @@ async def unclassified(host: str, use_cache: bool = True) -> QueryResult:
         for server_type in server_types
     ]
 
-    for task in asyncio.as_completed(tasks):
-        try:
-            result = await task
-            if "error" not in result:
-                return result
-        except (ValueError, OSError) as exc:
-            logger.warning("Status query failed for %s: %s", host, exc)
-            continue
+    try:
+        for task in asyncio.as_completed(tasks):
+            try:
+                result = await task
+                if "error" not in result:
+                    # Cancel remaining tasks
+                    for t in tasks:
+                        if not t.done():
+                            t.cancel()
+                    # Wait for cancelled tasks to finish
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                    return result
+            except (ValueError, OSError) as exc:
+                logger.warning("Status query failed for %s: %s", host, exc)
+                continue
+    finally:
+        # Ensure all tasks are properly handled
+        for t in tasks:
+            if not t.done():
+                t.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     return {"error": "No server status detected, Is server offline?"}
 
