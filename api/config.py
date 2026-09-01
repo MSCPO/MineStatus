@@ -52,21 +52,35 @@ def load_config() -> AppConfig:
 
     # Server config
     server_section = raw.get("server", {})
-    host = server_section.get("host") or _get_env("HOST") or "0.0.0.0"
-    port_str = server_section.get("port") or _get_env("PORT")
-    port = int(port_str) if port_str else 3000
+    host = server_section.get("host")
+    if host is None:
+        host = _get_env("HOST")
+    if host is None:
+        host = "0.0.0.0"
+
+    port_raw = server_section.get("port")
+    if port_raw is None:
+        port_raw = _get_env("PORT")
+    port = int(port_raw) if port_raw is not None else 3000
 
     # Cache config
     cache_section = raw.get("cache", {})
-    ttl_str = cache_section.get("ttl") or _get_env("CACHE_TTL")
-    ttl = int(ttl_str) if ttl_str else 600
-    max_size_str = cache_section.get("max_size") or _get_env("CACHE_MAX_SIZE")
-    max_size = int(max_size_str) if max_size_str else 100
+    ttl_raw = cache_section.get("ttl")
+    if ttl_raw is None:
+        ttl_raw = _get_env("CACHE_TTL")
+    ttl = int(ttl_raw) if ttl_raw is not None else 600
+
+    max_size_raw = cache_section.get("max_size")
+    if max_size_raw is None:
+        max_size_raw = _get_env("CACHE_MAX_SIZE")
+    max_size = int(max_size_raw) if max_size_raw is not None else 100
 
     # Query config
     query_section = raw.get("query", {})
-    timeout_str = query_section.get("timeout") or _get_env("TIMEOUT")
-    timeout = int(timeout_str) if timeout_str else 8
+    timeout_raw = query_section.get("timeout")
+    if timeout_raw is None:
+        timeout_raw = _get_env("TIMEOUT")
+    timeout = int(timeout_raw) if timeout_raw is not None else 8
 
     return AppConfig(
         server=ServerConfig(host=host, port=port),

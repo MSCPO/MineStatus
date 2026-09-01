@@ -1,0 +1,1 @@
+"""MineStatus API package."""

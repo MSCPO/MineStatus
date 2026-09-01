@@ -1,7 +1,8 @@
 """MineStatus - a lightweight Minecraft server status query API."""
 
 import base64
-from importlib.metadata import version
+import tomllib
+from pathlib import Path
 from typing import Annotated
 
 import uvicorn
@@ -15,10 +16,21 @@ from api import MineStatus
 # Application
 # ---------------------------------------------------------------------------
 
+
+def _get_version() -> str:
+    """Read the app version from pyproject.toml (single source of truth)."""
+    pyproject = Path(__file__).resolve().parent / "pyproject.toml"
+    try:
+        with open(pyproject, "rb") as f:
+            return tomllib.load(f)["project"]["version"]
+    except (KeyError, OSError, tomllib.TOMLDecodeError):
+        return "0.0.0"
+
+
 app = FastAPI(
     title="MineStatus API",
     description="A lightweight Minecraft server status query API.",
-    version=version("minestatus"),
+    version=_get_version(),
     contact={"name": "MSCPO", "url": "https://github.com/MSCPO/MineStatus"},
 )
 
