@@ -182,4 +182,6 @@ async def status_bedrock(ip: IpParam, cache: CacheParam = True):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=3000)
+    from api.config import config
+
+    uvicorn.run(app, host=config.server.host, port=config.server.port)

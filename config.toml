@@ -1,0 +1,25 @@
+# MineStatus Configuration
+# Priority: config.toml > Environment Variables (MINESTATUS_*) > Default Values
+
+[server]
+# Server bind address
+# Env: MINESTATUS_HOST
+host = "0.0.0.0"
+
+# Server listen port
+# Env: MINESTATUS_PORT
+port = 3000
+
+[cache]
+# Cache time-to-live in seconds (default: 600 = 10 minutes)
+# Env: MINESTATUS_CACHE_TTL
+ttl = 600
+
+# Maximum number of cached entries
+# Env: MINESTATUS_CACHE_MAX_SIZE
+max_size = 100
+
+[query]
+# Timeout for DNS resolution and connection in seconds
+# Env: MINESTATUS_TIMEOUT
+timeout = 8

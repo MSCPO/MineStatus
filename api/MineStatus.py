@@ -6,13 +6,12 @@ from mcstatus import BedrockServer, JavaServer
 from mcstatus.motd import Motd
 from mcstatus.responses import BedrockStatusResponse, JavaStatusResponse
 
+from .config import config
 from .ServerCache import ServerCache
 
-server_cache = ServerCache(ttl=600)  # 10 minutes
+server_cache = ServerCache(ttl=config.cache.ttl, max_cache_size=config.cache.max_size)
 
-# DNS + connection budget per status query (seconds). Keep this generous:
-# some resolvers need more than 3s for DNS alone.
-TIMEOUT = 8
+TIMEOUT = config.query.timeout
 
 logger = logging.getLogger(__name__)
 
