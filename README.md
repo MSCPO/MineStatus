@@ -21,7 +21,6 @@ ServerLess:
 
 On lookup Server:
 - **uv (recommended)**: `uv sync` then `uv run main.py` (dependencies locked in `uv.lock`).
-- **pip**: `pip install -r requirements.txt` then `python main.py` (served on port 3000).
 
 ## Features
 

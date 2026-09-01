@@ -21,7 +21,6 @@ ServerLess部署：
 
 本地部署：
 - **uv（推荐）**：`uv sync` 后执行 `uv run main.py`（依赖锁定在 `uv.lock`）。
-- **pip**：`pip install -r requirements.txt` 后执行 `python main.py`（监听 3000 端口）。
 
 ## 特性
 
