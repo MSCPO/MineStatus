@@ -68,7 +68,7 @@ async def get_server_stats(
         QueryResult: The server's status or an error message.
     """
     try:
-        cache_key = f"{host}_{server_type}"  # 用host和server_type作为缓存的键
+        cache_key = f"{host}_{server_type}"  # Cache key based on host and server type
         if use_cache:
             cached_result = cast(
                 QueryResult | None, await server_cache.get(cache_key)

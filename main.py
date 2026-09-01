@@ -1,6 +1,7 @@
 """MineStatus - a lightweight Minecraft server status query API."""
 
 import base64
+from importlib.metadata import version
 from typing import Annotated
 
 import uvicorn
@@ -17,7 +18,7 @@ from api import MineStatus
 app = FastAPI(
     title="MineStatus API",
     description="A lightweight Minecraft server status query API.",
-    version="0.2.0",
+    version=version("minestatus"),
     contact={"name": "MSCPO", "url": "https://github.com/MSCPO/MineStatus"},
 )
 
